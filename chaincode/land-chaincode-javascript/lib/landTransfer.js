@@ -92,26 +92,19 @@ class LandTransfer extends Contract {
     return ctx.stub.putState(land.ULPIN, Buffer.from(JSON.stringify(land)));
   }
 
-  async GetAllAssets(ctx) {
+  async GetAllLandRecords(ctx) {
     const allResult = [];
     // range query with empty string for startKey and endKey does an open-ended query of all assets in the chaincode namespace.
-    const iterator = await ctx.stub.getStateByRange("", "");
-    let result = await iterator.next();
-    while (!result.done) {
-      const strValue = Buffer.from(result.value.value.toString()).toString(
-        "utf8"
-      );
-      let record;
-      try {
-        record = JSON.parse(strValue);
-      } catch (err) {
-        console.log(err);
-        record = strValue;
-      }
-      allResults.push({ Key: result.value.key, Record: record });
-      result = await iterator.next();
+    const iteratorPromise = ctx.stub.getStateByRange('','');
+    let results = [];
+    for await (const res of iteratorPromise) {
+        results.push({
+            key: res.key,
+            value: res.value.toString()
+        });
     }
-    return JSON.stringify(allResults);
+
+    return JSON.stringify(results);
   }
 }
 
